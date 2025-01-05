@@ -1,4 +1,4 @@
-<img width="1148" alt="result" src="https://github.com/user-attachments/assets/ee5b6ff5-f23f-4846-bd84-746491d38b24" /># SQLmap-like Tool 🛡️
+# SQLmap-like Tool 🛡️
 
 <div align="center">
 
@@ -37,7 +37,7 @@ This tool was created as an educational exercise to understand the mechanics of 
 
 ## **Features**
 
-- Supports both `GET` and `POST` HTTP methods.
+- Supports both GET and POST HTTP methods.
 - Multiple SQL Injection testing techniques (e.g., blind, union-based, and time-based).
 - URL crawling to discover hidden endpoints.
 - Proxy support for anonymity.
@@ -74,36 +74,31 @@ python scanqli.py -u "http://target.com" -p id \
     --output scan_results.html
 ```
 
-
-
 ## Usage
 
 Basic command structure:
 ```bash
 python scanqli.py -u <target_url> -p <parameter> [options]
 ```
+
 ### **Options**
 
 | **Argument**              | **Required** | **Description**                                                                                  |
 |---------------------------|--------------|--------------------------------------------------------------------------------------------------|
-| `-u`, `--url`             | Yes          | Target URL to scan (e.g., `http://example.com/page.php?id=1`).                                   |
-| `-p`, `--param`           | Yes          | Vulnerable parameter to test (e.g., `id`).                                                      |
-| `-m`, `--method`          | No           | HTTP method to use (`GET` or `POST`). Default: `GET`.                                           |
-| `-t`, `--threads`         | No           | Number of concurrent threads. Default: `10`.                                                   |
-| `--timeout`               | No           | Timeout for HTTP requests in seconds. Default: `10`.                                            |
-| `--proxies`               | No           | Proxy URL (e.g., `http://127.0.0.1:8080`).                                                      |
-| `--user-agents`           | No           | Rotate through a list of custom User-Agents.                                                   |
-| `-o`, `--output`          | No           | Output file to save results (`.json` or `.html`).                                               |
-| `--crawl`                 | No           | Enable crawling to discover additional URLs.                                                   |
-| `--depth`                 | No           | Crawling depth. Default: `2`.                                                                   |
-| `--tests`                 | No           | Specific tests to run (e.g., `basic`, `union`, `blind`). Default: all tests.                    |
-| `--db`                    | No           | Target a specific database.                                                                     |
-| `--tbl`                   | No           | Target a specific table.                                                                        |
-| `--post-data`             | No           | POST data in `key=value&key2=value2` format. Required if `--method POST` is used.               |
-
-
-
-
+| -u, --url             | Yes          | Target URL to scan (e.g., http://example.com/page.php?id=1).                                   |
+| -p, --param           | Yes          | Vulnerable parameter to test (e.g., id).                                                      |
+| -m, --method          | No           | HTTP method to use (GET or POST). Default: GET.                                           |
+| -t, --threads         | No           | Number of concurrent threads. Default: 10.                                                   |
+| --timeout               | No           | Timeout for HTTP requests in seconds. Default: 10.                                            |
+| --proxies               | No           | Proxy URL (e.g., http://127.0.0.1:8080).                                                      |
+| --user-agents           | No           | Rotate through a list of custom User-Agents.                                                   |
+| -o, --output          | No           | Output file to save results (.json or .html).                                               |
+| --crawl                 | No           | Enable crawling to discover additional URLs.                                                   |
+| --depth                 | No           | Crawling depth. Default: 2.                                                                   |
+| --tests                 | No           | Specific tests to run (e.g., basic, union, blind). Default: all tests.                    |
+| --db                    | No           | Target a specific database.                                                                     |
+| --tbl                   | No           | Target a specific table.                                                                        |
+| --post-data             | No           | POST data in key=value&key2=value2 format. Required if --method POST is used.               |
 
 #### Test Selection
 
@@ -175,12 +170,16 @@ This tool is provided for educational purposes only and should only be used in a
 ## Credits
 
 - Inspired by the SQLmap project (https://github.com/sqlmapproject/sqlmap)
+
+## Screenshots
+### 1. Scan Result
+![scan result](screenshots/result.png)
+
 <div align="center">
 
 Made with ❤️ by Omeiri, Hezil, and Rezig
 
 </div>
 
-## Screenshots
-### 1. scan result
-![scan result](screenshots/result.png)
+</div>
+
