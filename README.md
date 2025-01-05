@@ -1,14 +1,35 @@
-# SQLmap-like Tool
+# SQLmap-like Tool 🛡️
 
-![SQLmap-like](https://img.shields.io/badge/Python-3.8%2B-blue) ![License](https://img.shields.io/badge/License-MIT-green)
+<div align="center">
 
-SQLmap-like is a Python-based SQL Injection scanning tool inspired by sqlmap, developed as a university project. This educational tool replicates core functionalities of the popular SQLmap while offering flexibility, customization, and enhanced usability for penetration testers and ethical hackers. It also serves as a learning platform to understand SQL injection testing concepts. ⚠️ Use this tool responsibly and only in environments where you have explicit permission.---
+![SQLmap-like](https://img.shields.io/badge/Python-3.8%2B-blue)
+![License](https://img.shields.io/badge/License-MIT-green)
+![Development Status](https://img.shields.io/badge/Status-Active-success)
+![Security](https://img.shields.io/badge/Security-Pentest-red)
+![Last Commit](https://img.shields.io/badge/Last%20Commit-2024-orange)
+
+*A powerful SQL injection testing framework built for modern security professionals*
+
+[Key Features](#features) •
+[Installation](#installation) •
+[Quick Start](#quick-start) •
+[Documentation](#documentation) •
+[Contributing](#contributing)
+
+</div>
+---
+
+## 🎯 Overview
+
+SQLmap-like is a Python-based SQL Injection scanning tool inspired by sqlmap, developed as a university project. This educational tool replicates core functionalities of the popular SQLmap while offering flexibility, customization, and enhanced usability for penetration testers and ethical hackers. It also serves as a learning platform to understand SQL injection testing concepts. ⚠️ Use this tool responsibly and only in environments where you have explicit permission.
+
+---
 ## Project Information
 
 **Developed by:**
-- Omeiri
-- Hezil
-- Rezig
+- Hezil Adem
+- Omeiri Abdellah
+- Rezig Nasim
 
 This tool was created as an educational exercise to understand the mechanics of SQL injection testing and automated security assessment tools. While inspired by SQLmap, it serves as a learning implementation with a focused feature set.
 
@@ -24,11 +45,35 @@ This tool was created as an educational exercise to understand the mechanics of 
 - Export results in **JSON** or **HTML** formats.
 
 ---
-## Requirements
+## 🛠️ Installation
 
 ```bash
+# Clone the repository
+git clone https://github.com/your-username/sqlmap-like.git
+
+# Navigate to the project directory
+cd sqlmap-like
+
+# Install required dependencies
 pip install -r requirements.txt
 ```
+
+## 💻 Quick Start
+
+Basic vulnerability scan:
+```bash
+python scanqli.py -u "http://target.com/page.php?id=1" -p id
+```
+
+Advanced scan with all features:
+```bash
+python scanqli.py -u "http://target.com" -p id \
+    --crawl --depth 3 \
+    --tests union blind timebase \
+    --threads 20 \
+    --output scan_results.html
+```
+
 
 
 ## Usage
@@ -130,4 +175,8 @@ This tool is provided for educational purposes only and should only be used in a
 ## Credits
 
 - Inspired by the SQLmap project (https://github.com/sqlmapproject/sqlmap)
-- Developed as a university project by Omeiri, Hezil, and Rezig
+<div align="center">
+
+Made with ❤️ by Omeiri, Hezil, and Rezig
+
+</div>
