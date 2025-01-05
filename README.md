@@ -49,7 +49,7 @@ This tool was created as an educational exercise to understand the mechanics of 
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/sqlmap-like.git
+git clone https://github.com/Mromeiri/sqlmap-like
 
 # Navigate to the project directory
 cd sqlmap-like
