@@ -1,18 +1,4 @@
-#!/usr/bin/env python3
-"""
-Script Naïf Time-Based Blind SQL Injection Intelligent
----------------------------------------------------------
-Ce script utilise des injections basées sur le temps pour extraire des informations
-de la cible (à usage pédagogique uniquement) et met en cache :
-  - Le banner du SGBD et le type (MySQL ou PostgreSQL)
-  - Le nom de la base de données (normalisé en minuscules)
-  - Le nombre et les noms des tables
-  - La liste des colonnes pour chaque table (lorsqu'extraites)
-  - Le dump (quelques lignes) d'une table sélectionnée
 
-Le menu interactif permet d'exécuter ces actions sans devoir re-scanner les informations déjà
-extraites.
-"""
 
 import time
 import requests
